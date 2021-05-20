@@ -25,6 +25,9 @@ AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
 AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
 
+GOTIFY_URL=${GOTIFY_URL:""}
+GOTIFY_TOKEN=${GOTIFY_TOKEN:""}
+
 docker_curl() {
   curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
   ${CA} ${CLIENT_KEY} ${CLIENT_CERT} \
@@ -61,16 +64,24 @@ term_handler() {
   exit 143  # 128 + 15 -- SIGTERM
 }
 
+message() {
+  echo $1
+  
+  if [ -z "$GOTIFY_URL" ] && [ -z "$GOTIFY_TOKEN" ];then
+  
+  else
+    curl "$GOTIFY_URL/message?token=$GOTIFY_TOKEN" -F "title=Autoheal" -F "message=$1" -F "priority=5"
+  fi
+}
+
 # shellcheck disable=2039
 trap 'kill $$; term_handler' SIGTERM
 
 if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   # Delayed startup
-  if [ "$AUTOHEAL_START_PERIOD" -gt 0 ]
-  then
-  echo "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
-    sleep "$AUTOHEAL_START_PERIOD"
-  fi
+  
+  message "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
+  sleep "$AUTOHEAL_START_PERIOD"
 
   while true
   do
@@ -85,15 +96,15 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
 
       if [ "$CONTAINER_NAME" = "null" ]
       then
-        echo "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" >&2
+        message "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart"
       elif [ "$CONTAINER_STATE" = "restarting" ]
       then
-        echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart"
+        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart"
       else
-        echo "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
+        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
-          echo "$DATE Restarting container $CONTAINER_SHORT_ID failed" >&2
+          message "$DATE Restarting container $CONTAINER_SHORT_ID failed"
         fi
       fi
     done
