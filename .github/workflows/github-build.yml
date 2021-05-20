@@ -41,3 +41,4 @@ jobs:
           platforms: linux/amd64
           tags: |
             ghcr.io/${{ env.IMAGE_REPOSITORY }}/autoheal:${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_REPOSITORY }}/autoheal:latest
