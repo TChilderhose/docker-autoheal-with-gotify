@@ -25,6 +25,7 @@ AUTOHEAL_START_PERIOD=${AUTOHEAL_START_PERIOD:-0}
 AUTOHEAL_INTERVAL=${AUTOHEAL_INTERVAL:-5}
 AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
 
+GOTIFY_TITLE=${GOTIFY_TITLE:"Autoheal"}
 GOTIFY_URL=${GOTIFY_URL:""}
 GOTIFY_TOKEN=${GOTIFY_TOKEN:""}
 
@@ -65,10 +66,9 @@ term_handler() {
 }
 
 message() {
-  echo $1
-  
+  echo $1  
   if [ "$GOTIFY_URL" ] && [ "$GOTIFY_TOKEN" ];then
-    curl "$GOTIFY_URL/message?token=$GOTIFY_TOKEN" -F "title=Autoheal" -F "message=$1" -F "priority=5"
+    curl -s "$GOTIFY_URL/message?token=$GOTIFY_TOKEN" -F "title=$GOTIFY_TITLE" -F "message=$1" -F "priority=$2" > /dev/null
   fi
 }
 
@@ -78,7 +78,7 @@ trap 'kill $$; term_handler' SIGTERM
 if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   # Delayed startup
   
-  message "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)"
+  message "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)" 1
   sleep "$AUTOHEAL_START_PERIOD"
 
   while true
@@ -94,15 +94,15 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
 
       if [ "$CONTAINER_NAME" = "null" ]
       then
-        message "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart"
+        message "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" 5
       elif [ "$CONTAINER_STATE" = "restarting" ]
       then
-        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart"
+        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart" 5
       else
-        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout"
+        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout" 5
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
-          message "$DATE Restarting container $CONTAINER_SHORT_ID failed"
+          message "$DATE Restarting container $CONTAINER_SHORT_ID failed" 5
         fi
       fi
     done
