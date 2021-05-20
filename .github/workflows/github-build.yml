@@ -6,8 +6,6 @@ on:
       - main
     tags:
       - '*'
-  schedule:
-    - cron: '0 0 * * *'
 
 jobs:
   multi:
