@@ -1,6 +1,7 @@
 FROM alpine:3.11
 
-RUN apk add --no-cache curl jq
+RUN apk add --no-cache curl jq && \
+    apk add --no-cache tzdata
 
 COPY docker-entrypoint /
 ENTRYPOINT ["/docker-entrypoint"]
