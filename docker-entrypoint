@@ -28,6 +28,8 @@ AUTOHEAL_DEFAULT_STOP_TIMEOUT=${AUTOHEAL_DEFAULT_STOP_TIMEOUT:-10}
 GOTIFY_TITLE=${GOTIFY_TITLE:"Autoheal"}
 GOTIFY_URL=${GOTIFY_URL:""}
 GOTIFY_TOKEN=${GOTIFY_TOKEN:""}
+GOTIFY_STARTUP_ALERT_PRIORITY=${GOTIFY_STARTUP_ALERT_PRIORITY:1}
+GOTIFY_ALERT_PRIORITY=${GOTIFY_ALERT_PRIORITY:5}
 
 docker_curl() {
   curl --max-time "${CURL_TIMEOUT}" --no-buffer -s \
@@ -78,7 +80,7 @@ trap 'kill $$; term_handler' SIGTERM
 if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
   # Delayed startup
   
-  message "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)" 1
+  message "Monitoring containers for unhealthy status in $AUTOHEAL_START_PERIOD second(s)" $GOTIFY_STARTUP_ALERT_PRIORITY
   sleep "$AUTOHEAL_START_PERIOD"
 
   while true
@@ -94,15 +96,15 @@ if [ "$1" = "autoheal" ] && [ -e "$DOCKER_SOCK" ];then
 
       if [ "$CONTAINER_NAME" = "null" ]
       then
-        message "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" 5
+        message "$DATE Container name of (${CONTAINER_SHORT_ID}) is null, which implies container does not exist - don't restart" $GOTIFY_ALERT_PRIORITY
       elif [ "$CONTAINER_STATE" = "restarting" ]
       then
-        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart" 5
+        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be restarting - don't restart" $GOTIFY_ALERT_PRIORITY
       else
-        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout" 5
+        message "$DATE Container $CONTAINER_NAME (${CONTAINER_SHORT_ID}) found to be unhealthy - Restarting container now with ${TIMEOUT}s timeout" $GOTIFY_ALERT_PRIORITY
         if ! restart_container "$CONTAINER_ID" "$TIMEOUT"
         then
-          message "$DATE Restarting container $CONTAINER_SHORT_ID failed" 5
+          message "$DATE Restarting container $CONTAINER_SHORT_ID failed" $GOTIFY_ALERT_PRIORITY
         fi
       fi
     done
