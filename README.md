@@ -2,7 +2,7 @@
 
 This is a fork of https://github.com/willfarrell/docker-autoheal with the added functionality of sending gotify alerts. 
 
-## ADD ENV VAR
+## ADDED ENV VARS
 ```
 GOTIFY_TITLE=Title of message
 GOTIFY_URL=https://gotify.example.com
