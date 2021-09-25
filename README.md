@@ -2,6 +2,8 @@
 
 This is a fork of https://github.com/willfarrell/docker-autoheal with the added functionality of sending gotify alerts. 
 
+Image can be found at ghcr.io/tchilderhose/autoheal:latest
+
 ## ADDED ENV VARS
 ```
 GOTIFY_TITLE=Title of message
