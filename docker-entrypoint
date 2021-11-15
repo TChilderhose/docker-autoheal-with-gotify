@@ -69,7 +69,6 @@ term_handler() {
 
 message() {
   echo $1
-  echo $2
   if [ "$GOTIFY_URL" ] && [ "$GOTIFY_TOKEN" ];then
     curl -s -X POST "$GOTIFY_URL/message?token=$GOTIFY_TOKEN" -F "title=$GOTIFY_TITLE" -F "message=$1" -F "priority=$2" > /dev/null
   fi
